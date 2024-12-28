@@ -110,11 +110,102 @@ const toggleTweetLike=asyncHandler(async(req,res)=>{
     return res
     .status(200)
     .json(200,{},"Tweet disliked succesfully")
-
 })
+
+const getLikedVideos = asyncHandler(async (req, res) => {
+    //TODO: get all liked videos
+    const userId = req.user._id;
+    const likedVideos = Like.aggregate([
+      {
+        $match: {
+          likedBy: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: "videos",
+          localField: "video",
+          foreignField: "_id",
+          as: "likedVideos",
+        },
+      },
+      {
+        $unwind: "$likedVideos",
+      },
+      {
+        $match: {
+          "likedVideos.isPublished ": true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          let: { owner_id: "$likedVideos.owner" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$_id", "$$owner_id"] },
+              },
+            },
+            {
+              $project: {
+                id: 0,
+                username: 1,
+                avatar: 1,
+                fullName: 1,
+              },
+            },
+          ],
+          as: "owner",
+        },
+      },
+      {
+        $unwind: {
+          path: "$owner",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: "$likedVideos._id",
+          title: "$likedVideos.title",
+          thumbnail: "$likedVideos.thumbnail",
+          owner: {
+            username: "$owner.username",
+            fullName: "$owner.fullName",
+            avatar: "$owner.avatar",
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          likedVideos: { $push: "$$ROOT" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          likedVideos: 1,
+        },
+      },
+    ]);
+    if (likedVideos.length === 0) {
+      return res
+        .status(404)
+        .json(new ApiResponse(404, [], "No liked videos found"));
+    }
+  
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, likedVideos, "LikedVideos fetched Successfully!")
+      );
+  });
 
 export {
     toggleVideoLike,
     toggleCommentLike,
     toggleTweetLike,
+    getLikedVideos
 }
