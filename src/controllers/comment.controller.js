@@ -1,5 +1,5 @@
 import mongoose from "mongoose"
-import { Comment } from "../models/comment.model"
+import { Comment } from "../models/comment.model.js"
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
@@ -89,13 +89,13 @@ const getVideoComments = asyncHandler(async (req, res) => {
       page: parseInt(page, 10),
       limit: parseInt(limit, 10)
    }
-  
-   const comments = await  Comment.aggregatePaginate(commentAggregate,options)
 
-if(!comments || comments.length == 0){
-  return res.status(200).json( new ApiResponse(200,{}, "No comments on this video"))
-}
-return res.status(200).json(new ApiResponse(200,comments,"Comments fetched successfully"))
+   const comments = await Comment.aggregatePaginate(commentAggregate, options)
+
+   if (!comments || comments.length == 0) {
+      return res.status(200).json(new ApiResponse(200, {}, "No comments on this video"))
+   }
+   return res.status(200).json(new ApiResponse(200, comments, "Comments fetched successfully"))
 })
 
 const addComment = asyncHandler(async (req, res) => {
