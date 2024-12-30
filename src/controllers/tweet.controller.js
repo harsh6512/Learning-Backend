@@ -108,7 +108,7 @@ const getUserTweets=asyncHandler(async(req,res)=>{
     const tweet=Tweet.aggregate([{
         $match:{
             owner:new mongoose.Types.ObjectId(userId)
-        },{
+        }},{
             $group:{
                 _id :"owner",
                 tweets:{$push:"$content"}
@@ -119,10 +119,10 @@ const getUserTweets=asyncHandler(async(req,res)=>{
                 tweets:1
             }
         }
-    },])
+    ])
 
     if(!tweet || tweet.length===0){
-        retrun res
+        return res
         .status(200)
         .json(new ApiResponse(200,{},"User has no tweets"))
     }
@@ -130,8 +130,8 @@ const getUserTweets=asyncHandler(async(req,res)=>{
     return res
     .status(200)
     .json(new ApiResponse(200,tweet,"User tweets feteched successfully"))
-
 })
+
 export {
     createTweet,
     deleteTweet,
