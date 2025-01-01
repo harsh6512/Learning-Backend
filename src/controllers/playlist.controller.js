@@ -41,27 +41,6 @@ const createPlaylist=asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,playlist,"Playlist created successfully"))
 })
 
-
-const getUserPlaylist=asyncHandler(async(req,res)=>{
-    const {userId}=req.params
-    if(!userId){
-        throw new ApiError(400,"user id is required")
-    }
-
-    const user=await Playlist.findById(userId)
-    if(!user){
-        throw new ApiError(400,"User not found")
-    }
-
-    const playlist=await Playlist.aggregate([
-        {
-            $match:{
-                owner:user?.id
-            }
-        }
-    ])
-})
-
 const addVideoToPlaylist=asyncHandler(async(req,res)=>{
     const {playlistId,videoId}=req.params
 
@@ -197,7 +176,147 @@ const updatePlaylist=asyncHandler(async(req,res)=>{
     json(new ApiResponse(200, playlist,"Playlist updated successfully"))
 })
 
+const getUserPlaylist=asyncHandler(async(req,res)=>{
+    const {userId}=req.params
+    if(!userId){
+        throw new ApiError(400,"user id is required")
+    }
 
+    const user=await Playlist.findById(userId)
+    if(!user){
+        throw new ApiError(400,"User not found")
+    }
+
+    const playlist=await Playlist.aggregate([
+        {
+            $match:{
+                owner:user?.id
+            }
+        },
+        {
+            $lookup:{
+                from:"videos",
+                localField:"videos",
+                foreignField:"_id",
+                as:"videoDetails"
+            }
+        },
+        {
+            $project:{
+                _id:0,
+                name:1,
+                description:1,
+                owner:1,
+                createdat:1,
+                updatedat:1,
+                videos:{
+                    $map:{
+                        input:"videoDetails",
+                        as:"video",
+                        in:{
+                            if:{
+                                $or:[
+                                    { $eq: ["$$video.owner", new mongoose.Types.ObjectId(req.user._id)] },
+                                    { $eq: ["$$video.isPublished", true] }
+                                ]
+                            },
+                            then:"$$video",
+                            else:null
+                        }
+                    }
+                }
+            }
+        },
+        {
+            $set: {
+                videos: {
+                    $filter: {
+                        input: "$videos",
+                        as: "video",
+                        cond: { $ne: ["$$video", null] } 
+                    }
+                }
+            }
+        }
+    ])
+
+    if(!playlist){
+        throw new ApiError("User does not have any playlist")
+    }
+
+    return res
+    .status(200)
+    .json(ApiResponse(200,playlist,"user playlist fetched successfully"))
+})
+
+const getPlaylistById = asyncHandler(async (req, res) => {
+    const {playlistId} = req.params
+   
+    if(!playlistId){
+        throw new ApiError(400,"playlist id is required")
+    }
+    
+    const playlist=await Playlist.aggregate([
+        {
+            $match:{
+                owner:user?.id
+            }
+        },
+        {
+            $lookup:{
+                from:"videos",
+                localField:"videos",
+                foreignField:"_id",
+                as:"videoDetails"
+            }
+        },
+        {
+            $project:{
+                _id:0,
+                name:1,
+                description:1,
+                owner:1,
+                createdat:1,
+                updatedat:1,
+                videos:{
+                    $map:{
+                        input:"videoDetails",
+                        as:"video",
+                        in:{
+                            if:{
+                                $or:[
+                                    { $eq: ["$$video.owner", new mongoose.Types.ObjectId(req.user._id)] },
+                                    { $eq: ["$$video.isPublished", true] }
+                                ]
+                            },
+                            then:"$$video",
+                            else:null
+                        }
+                    }
+                }
+            }
+        },
+        {
+            $set: {
+                videos: {
+                    $filter: {
+                        input: "$videos",
+                        as: "video",
+                        cond: { $ne: ["$$video", null] } 
+                    }
+                }
+            }
+        }
+    ])
+
+
+    if(!playlist){
+        throw new ApiError(400,"playlist does not exist")
+    }
+    return res
+    .status(200)
+    .json(new ApiResponse(200, playlist,"playlist fetched from playlist id"))
+})
 
 export{
     createPlaylist,
@@ -205,4 +324,6 @@ export{
     removeVideoFromPlaylist,
     deletePlaylist,
     updatePlaylist,
+    getUserPlaylist,
+    getPlaylistById,
 }
