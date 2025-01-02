@@ -16,8 +16,13 @@ app.use(cookieParser())
 
 //importing the routes
 import userRouter from './routes/user.routes.js'
+import videoRouter from "./routes/video.routes.js"
 
 //routes declaration
 //we are not going to use the app.get here because we are directly writing the route code here instead we are importing it from other files (this is the syntax)
 app.use("/api/v1/users",userRouter) //here first it will be directed to the users and then to the register routed in the routes file hence the url will be http://localhost:8000/api/v1/users/register
+app.use("/api/v1/videos", videoRouter)
+
+
 export {app}
+
