@@ -29,7 +29,6 @@ router.route("/register").post(
             maxCount: 1
         },
     ]),
-
     registerUser)
 
 router.route("/login").post(loginUser)
