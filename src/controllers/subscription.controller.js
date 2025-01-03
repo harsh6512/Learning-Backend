@@ -101,7 +101,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 
 
 //this controller finds out the channels the user has subscribed to
-const getSubscribedChannel = asyncHandler(async (req, res) => {
+const getSubscribedChannels = asyncHandler(async (req, res) => {
     const userId=req.user?._id
     if(!userId){
         throw new ApiError(400,"user id is required")
@@ -146,5 +146,5 @@ const getSubscribedChannel = asyncHandler(async (req, res) => {
 export {
     toggleSubscription,
     getUserChannelSubscribers,
-    getSubscribedChannel,
+    getSubscribedChannels,
 }
